@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="UTF-8" />
+
+	<title>RVI WebGL 2.0 (vidéo 360)</title>
+    
+    <link rel="stylesheet" href="video360.css" />
+    
+    <script src="video360.js"></script>
+    <script src="p3d.js"></script>
+
+    <script id="shader360-vs" type="x-shader/x-vertex">#version 300 es
+        layout (location=0) in vec3 position;
+        // Pour la texture
+        layout(location=1) in vec2 texCoord;
+
+        // uniforms pour la transformation
+        uniform mat4 modelview;
+        uniform mat4 projection;
+
+        out vec2 fTexCoord;
+
+        void main() {
+            fTexCoord = texCoord;
+            gl_Position = projection * modelview * vec4(position, 1.0);
+        }
+    </script>
+    
+    <script id="shader360-fs" type="x-shader/x-fragment">#version 300 es
+      
+        precision highp float;
+
+        uniform sampler2D image;
+        in vec2 fTexCoord;
+        out vec4 fragColor;
+
+        void main() {
+            //fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+            // pour la texture
+            fragColor = texture(image, fTexCoord);
+        }
+    </script>
+
+</head>
+
+
+<body>
+
+<img src="EarthDay1024.jpg" id="earth" />
+
+<video id="video360" src="repas2.webm" autoplay="true" loop="true" controls="true">
+</video>
+
+
+<canvas id="canvasGL" width="512px" height="512px"></canvas>
+
+</body>
+
+
+</html>
