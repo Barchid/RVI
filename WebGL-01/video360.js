@@ -44,7 +44,7 @@ function main() {
   video.addEventListener("playing", () => isVideoPlaying = true, true);
   video.addEventListener("ended", () => isVideoPlaying = false, true);
   video.addEventListener("pause", () => isVideoPlaying = false, true);
-  
+
   canvasGL = document.getElementById("canvasGL");
   gl = canvasGL.getContext("webgl2");
   if (!gl) {
@@ -270,13 +270,18 @@ function initSphereVAO() {
  * **/
 
 function update() {
-  angleViewX += 0.01;
   // angleViewY += 0.01
   modelview.setIdentity();
-  modelview.translate(0, 0, -2);
 
-  console.log(angleViewX);
-  modelview.rotateX(3);
+  // Voir la sphère
+  //modelview.translate(0, 0, -2);
+
+  // Rentrer dans la sphère
+  modelview.translate(0, 0, 0);
+
+  modelview.rotateX(Math.PI); // pour que la vidéo soit à l'endroit
+  modelview.rotateX(angleViewX);
+  modelview.rotateY(angleViewY);
   // modelview.rotateY(angleViewY);
 
   // Lire la video et update la texture avec
@@ -286,8 +291,7 @@ function update() {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture360);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, imageData);
-  }
-  else {
+  } else {
     let imageData = document.getElementById("earth");
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture360);
@@ -299,7 +303,10 @@ function update() {
 
 /**
  * draw
+  angleViewX += 0.01;
  * **/
+angleViewX += 0.01;
+
 function draw() {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.useProgram(shader360); // shader
@@ -404,19 +411,45 @@ function initTexture(id) {
  */
 function handleMouseDown(event) {
   // get the mouse relative to canvas
-  oldMouseX = event.layerX - canvasGL.offsetLeft;
-  oldMouseY = canvasGL.height - (event.layerY - canvasGL.offsetTop) - 1.0;
+  oldMouseX = event.layerX;
+  oldMouseY = event.layerY;
   mouseDown = true;
 }
 
 function handleMouseMove(event) {
   // get the mouse relative to canvas
   if (mouseDown) {
-    var mouseX = event.layerX - canvasGL.offsetLeft;
-    var mouseY = canvasGL.height - (event.layerY - canvasGL.offsetTop) - 1.0;
+    var mouseX = event.layerX;
+    var mouseY = event.layerY;
 
+    // Détermination d'angle en X
+    const diffMouseX = mouseX - oldMouseX; // distance en X entre la vieille et la nouvelle position de souris
 
+    // SI [je bouge ma souris vers la droite]
+    if (diffMouseX >= 0) {
+      // ALORS [je tourne vers la droite]
+      angleViewY += mapNum(Math.abs(diffMouseX), 0, canvasGL.width, 0, Math.PI); // de 0 à PI = 0 à 180° mais en radians
+    }
+    // SINON (càd que ma souris se bouge vers la gauche)
+    else {
+      // ALORS [je tourne vers la gauche]
+      angleViewY += -mapNum(Math.abs(diffMouseX), 0, canvasGL.width, 0, Math.PI);
+    }
 
+    // Détermination d'angle en Y
+    const diffMouseY = mouseY - oldMouseY; // distance en Y entre la vieille et la nouvelle position de souris
+    // SI [je bouge ma souris vers le haut]
+    if (diffMouseY >= 0) {
+      // ALORS [je tourne vers le haut]
+      angleViewX += mapNum(Math.abs(diffMouseY), 0, canvasGL.height, 0, Math.PI); // de 0 à PI = 0 à 180° mais en radians
+    }
+    // SINON (càd que ma souris se bouge vers le bas)
+    else {
+      // ALORS [je tourne vers le bas]
+      angleViewX += -mapNum(Math.abs(diffMouseY), 0, canvasGL.height, 0, Math.PI);
+    }
+
+    // mettre à jour pour la prochaine fois
     oldMouseX = mouseX;
     oldMouseY = mouseY;
   }
@@ -424,4 +457,17 @@ function handleMouseMove(event) {
 
 function handleMouseUp(event) {
   mouseDown = false;
+}
+
+/**
+ * Interpole la valeur de X (qui se trouve dans l'intervalle [A,B] vers une nouvelle valeur qui se trouve dans l'intervalle [C,D]
+ * @param {number} X 
+ * @param {number} A 
+ * @param {number} B 
+ * @param {number} C 
+ * @param {number} D 
+ * @returns {number}
+ */
+function mapNum(X, A, B, C, D) {
+  return (C - D) * ((X - A) / (B - A)) + C;
 }
